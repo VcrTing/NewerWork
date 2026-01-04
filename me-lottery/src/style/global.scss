@@ -1,0 +1,43 @@
+@use './custom.scss';
+@use './home.scss';
+
+// global.scss
+// variables.scss
+$primary-color: #fe4e5e;
+$background-color: #fefefe;
+$padding: 124px;
+// :export {
+//     primaryColor: $primary-color;
+//     backgroundColor: $background-color;
+//     padding: $padding;
+// }
+
+/*end*/
+
+/* 父容器：需要滚动的元素（如 div、body） */
+.hide-scrollbar {
+  /* 核心：保留滚动功能（必须设置，否则无法滚动） */
+  overflow: auto; /* 或 overflow-y: auto（仅纵向滚动）、overflow-x: auto（仅横向滚动） */
+  
+  /* 1. WebKit 内核（Chrome、Safari、Edge 88+） */
+  -webkit-overflow-scrolling: touch; /* 优化移动端滚动流畅度（可选） */
+}
+
+/* WebKit 内核：隐藏滚动条 */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* 直接隐藏滚动条 */
+  /* 或用 width/height: 0，效果一致 */
+  /* width: 0;
+  height: 0; */
+}
+
+/* 2. Firefox */
+.hide-scrollbar {
+  scrollbar-width: none; /* 隐藏滚动条（auto/thin/none） */
+  scrollbar-color: transparent transparent; /* 滚动条颜色（滑块/轨道），透明化兜底 */
+}
+
+/* 3. IE 10+ / 旧版 Edge */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* 隐藏滚动条（默认是 auto，none 表示隐藏） */
+}

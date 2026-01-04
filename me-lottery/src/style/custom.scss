@@ -1,0 +1,84 @@
+
+.o-prize-img-wrap {
+    width: 4rem;
+    height: 3.7rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    // padding-left: 8px;
+}
+
+.o-prize-img-inner {
+    width: 3.4rem;
+    height: 3.4rem;
+    overflow: hidden;
+}
+.o-prize-img {
+    width: 100%;
+    // width: 2.5rem;
+    height: auto;
+}
+.o-prize-img:hover {
+    transform: scale(1.03);
+    transition: transform 0.64s;
+}
+
+.o-ps-fuii {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    content: '';
+}
+.o-prize-item {
+    // background-color: rgba(0, 0, 0, 1);
+    position: relative;
+    width: 13.2rem;
+}
+.o-prize-item-mask {
+    z-index: 100;
+    // background-color: transparent;
+    background-color: rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+}
+.o-prize-item-bg {
+    z-index: 50;
+}
+.o-prize-item-card {
+    position: relative;
+    z-index: 300;
+}
+.o-prize-item-mask-inner {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    .o-prize-img {
+        
+    }
+}
+
+.o-html-video {
+    width: 100%;
+    height: auto;
+    pointer-events: none;
+}
+
+///
+.o-prize-list-wrapper {
+    top: 10vh;
+    max-height: 90vh;
+    overflow: hidden;
+    overflow-y: scroll;
+}
+.o-prize-list-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.o-prize-title {
+    font-size: 0.8rem;
+    width: 7.6rem;
+}
+///
+/// 
