@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>益彩2025年全民大会</title>
+    <script>
+        const user = 'Admin'
+        const folder = './'
+        const prefixSrc = (src, res = '') => { if (src.startsWith('./')) { res = src.replace('./', '') } return folder + res; }
+        // config.js - 资源配置文件
+        var RESOURCE_CONFIG = {
+            images: {
+                // 背景图片
+                background: prefixSrc('./BG.jpg'),
+                background2: prefixSrc('./BG2.jpg'),
+                // 礼盒图片
+                giftBox: prefixSrc('./礼盒.webp'),
+            },
+            audio: {
+                // 音频文件
+                surpriseBox: prefixSrc('./惊喜礼盒.mp3'),
+                applause: prefixSrc('./掌声.mp3')
+            },
+            page: {
+                // 页面标题
+                title: ""
+            }
+        };
+        var CONFIG = {
+            // 使用资源配置
+            resources: RESOURCE_CONFIG,
+            
+            // 背景图片URL现在从RESOURCE_CONFIG中获取
+            backgroundImageUrl: '', // RESOURCE_CONFIG.images.background,
+            pageTitleText: RESOURCE_CONFIG.page.title, // "益彩2025年全民大会",
+            employeeData: [ ],
+            giftRotatingTime: 200,
+            // 礼盒名称
+            giftNames: [
+                "幸运礼盒", "惊喜礼盒", "好运礼盒", "财富礼盒", 
+                "幸福礼盒", "健康礼盒", "快乐礼盒", "成功礼盒"
+            ],
+            // 优化礼花配置：数量更多、尺寸更大、无延迟，确保一眼可见
+            confettiConfig: {
+                count: 120, // 增加数量，更密集
+                colors: ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffffff'],
+                sizes: [10, 12, 14, 16], // 增大尺寸，更显眼
+                fallDuration: 4, // 固定下落时长，不随机
+                swayDuration: 2, // 固定飘动时长
+                delayMax: 0.5 // 最大延迟0.5秒，几乎立即出现
+            },
+            particleConfig: {
+                particleCount: 80,
+                particleSizeMin: 3,
+                particleSizeMax: 10,
+                easeSpeed: 0.02,
+                distanceRatio: 0.618,
+                randomness: 1.0,
+                colorRatio: {
+                    skyblue: 0.9,
+                    yellow: 0.1
+                }
+            }
+        };
+    </script>
+    <style>
+        .fx-c {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+        }
+        .v-h {
+            visibility: hidden !important;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            width: 100vw;
+            height: 100vh;
+            background: no-repeat center center;
+            background-size: cover;
+            background-attachment: fixed;
+            overflow: hidden;
+            cursor: default;
+            position: relative;
+        }
+        .bf-7 {
+            backdrop-filter: blur(7px);
+        }
+        .ani-card-pop {
+            animation: cardPop 1s ease forwards;
+        }
+        @keyframes cardPop {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        @keyframes festiveRed {
+            0%, 100% {
+                transform: scale(1);
+                text-shadow: 0 0 15px rgba(255, 0, 0, 0.7),
+                            0 0 5px rgba(255, 0, 0, 0.5);
+            }
+            50% {
+                transform: scale(1.03);
+                text-shadow: 0 0 30px rgba(255, 0, 0, 1),
+                            0 0 20px rgba(255, 0, 0, 0.8),
+                            0 0 10px rgba(255, 255, 255, 0.6);
+            }
+        }
+        
+        /* 粒子样式 */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.8;
+            pointer-events: none;
+            transition: none;
+            z-index: 1;
+        }
+        .particle-skyblue {
+            background: rgba(135, 187, 235, 0.8)
+        }
+        .particle-yellow {
+            background: rgba(66, 113, 194, 0.8);
+            box-shadow: 0 0 8px rgba(66, 113, 194, 0.8);
+        }
+        /* 顶部标题 */
+        .lottery-title {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 36px;
+            font-weight: bold;
+            color: #fff;
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            border-radius: 2px;
+            z-index: 10;
+        }
+        /* ===================== 修复后的礼花特效样式 ===================== */
+        .confetti {
+            position: fixed;
+            top: 0; /* 从可视区域顶部开始，不再靠上 */
+            left: 0;
+            pointer-events: none;
+            z-index: 9999; /* 最高层级，确保不被遮挡 */
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8); /* 增加发光，更显眼 */
+            /* 修复transform冲突：fall负责下落，sway负责左右+旋转 */
+            animation: 
+                confetti-fall 4s linear forwards, 
+                confetti-sway 2s ease-in-out infinite;
+        }
+        /* 礼花下落动画（仅控制Y轴） */
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            90% {
+                opacity: 0.9;
+            }
+            100% {
+                transform: translateY(100vh); /* 落到视口底部 */
+                opacity: 0;
+            }
+        }
+        /* 礼花左右+旋转飘动（仅控制X轴+旋转） */
+        @keyframes confetti-sway {
+            0% {
+                transform: translateX(0) rotate(0deg);
+            }
+            50% {
+                transform: translateX(50px) rotate(180deg); /* 增加旋转，更逼真 */
+            }
+            100% {
+                transform: translateX(0) rotate(360deg);
+            }
+        }
+    </style>
+    <style>
+        /* ===================== 礼盒环形样式 ===================== */
+        .gift-ring-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            z-index: 5;
+        }
+        
+        .gift-ring {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            animation: slow-rotate 20s linear infinite;
+        }
+        
+        @keyframes slow-rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        
+        @keyframes fast-rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(1800deg); /* 5圈 */
+            }
+        }
+        .gift-box-root {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            transform: translate(-50%, -50%);
+        }
+        .gift-box {
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .gift-box-root:hover {
+            transform: translate(-50%, -50%) scale(1.15);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+            border-color: rgba(255, 215, 0, 0.8);
+        }
+        .gift-box:hover {
+        }
+        
+        .gift-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 215, 0, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .gift-box:hover::before {
+            background: rgba(255, 215, 0, 0.2);
+        }
+        
+        .gift-box span {
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 2;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            text-align: center;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 6px;
+            backdrop-filter: blur(2px);
+        }
+        
+        /* 礼盒编号 */
+        .gift-box .number {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 215, 0, 0.9);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            color: #000;
+            font-weight: bold;
+            z-index: 3;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 添加一个发光效果 */
+        .gift-box .glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 110%;
+            height: 110%;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1;
+        }
+        
+        .gift-box:hover .glow {
+            opacity: 1;
+        }
+        
+        /* ===================== 抽奖按钮容器（移到底部） ===================== */
+        .lottery-btn-container {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        /* 抽奖按钮 */
+        #lotteryBtn {
+            width: 270px;
+            height: 60px;
+            background: rgba(255, 140, 0, 0.3);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 40px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        #lotteryBtn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 170, 0, 0.479);
+        }
+        #lotteryBtn:active {
+            transform: scale(0.98);
+        }
+        #lotteryBtn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        /* ===================== Modal样式 ===================== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 20;
+            display: none;
+            padding: 20px;
+        }
+        .modal-content {
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 0;
+            position: relative;
+            overflow: auto;
+            padding-bottom: 90px;
+        }
+        .modal-header {
+            display: block;
+            width: 100%;
+            padding: 16px 12px;
+        }
+        .lottery-text {
+            display: inline-block;
+            text-align: center;
+            font-size: 32px;
+            font-weight: bolder;
+        }
+        .modal-close-icon {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(3px);
+            -webkit-backdrop-filter: blur(3px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+            z-index: 30;
+            border: none;
+            outline: none;
+        }
+        .modal-close-icon:hover {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+            transform: translateX(-50%) scale(1.1);
+        }
+        #modalCardContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: flex-start;
+            align-items: flex-start;
+            width: 100%;
+            height: 100%;
+            padding-top: 20px;
+        }
+        .name-card {
+            width: 120px;
+            height: 70px;
+            background: rgba(0, 0, 0, 0.12);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            color: #fff;
+            font-weight: 500;
+            opacity: 0;
+            animation: cardPop 0.5s ease forwards;
+        }
+        @keyframes cardPop {
+            0% {
+                opacity: 0;
+                transform: scale(0);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        /* ===================== 谢谢惠顾样式 ===================== */
+        .thank-you-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(3px);
+            z-index: 25;
+            justify-content: center;
+            align-items: center;
+        }
+        .thank-you-text {
+            letter-spacing: 30px;
+            font-size: 120px;
+            animation: pulse-and-shake 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                text-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+            }
+            50% {
+                transform: scale(1.1);
+                text-shadow: 0 0 50px rgba(255, 0, 0, 1);
+            }
+            100% {
+                transform: scale(1);
+                text-shadow: 0 0 30px rgba(255, 0, 0, 0.8);
+            }
+        }
+        
+        /* ===================== 现金红包样式 ===================== */
+        .cash-red-envelope {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 120px;
+            height: 100px;
+            background: linear-gradient(135deg, #ff0000, #ff3333);
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 5px 12px rgba(82, 70, 0, 0.226);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 217, 0, 0.483);
+        }
+        
+        .cash-red-envelope::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 2px;
+            background: rgba(255, 217, 0, 0.473);
+        }
+        
+        .cash-red-envelope::after {
+            content: '￥';
+            position: absolute;
+            top: 10px;
+            right: 5px;
+            font-size: 12px;
+            color: gold;
+            font-weight: bold;
+        }
+        
+        .employee-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            margin-bottom: 5px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .prize-text {
+            font-size: 12px;
+            color: gold;
+            font-weight: bold;
+            text-align: center;
+        }
+        .cash-icon {
+            font-size: 24px;
+            color: gold;
+            margin-bottom: 5px;
+        }
+        
+        .red-text-with-shadow {
+            /* 黄色描边效果 */
+            -webkit-text-stroke: 2px #ff00008b;
+            text-stroke: 2px #ff00008b;
+            color: rgb(255, 251, 0);
+            /* text-shadow: 0 0 5px rgba(255, 94, 0, 0.555); */
+            font-weight: bold;
+            font-family: 'Arial Black', 'Microsoft YaHei', sans-serif;
+        }
+        .yellow-text-with-shadow {
+            -webkit-text-stroke: 2px rgba(255, 94, 0, 0.555);
+            text-stroke: 2px rgba(255, 94, 0, 0.555);
+            color: rgb(255, 251, 0);
+            font-weight: bold;
+            font-family: 'Arial Black', 'Microsoft YaHei', sans-serif;
+        }
+        .thank-you-text-2 {
+            text-align: center;
+            font-size: 30px;
+            padding: 36px 12px;
+            letter-spacing: 20px;
+        }
+        .gift-box-get {
+            position: relative;
+            width: 230px;
+            height: 240px;
+            box-shadow: none;
+            background-color: none;
+            border-color: transparent !important;
+            /* 添加动画属性 */
+            animation: shakeBox 6s ease-in-out infinite;
+            transform-origin: center bottom; /* 设置旋转中心为底部中心，效果更自然 */
+        }
+        @keyframes shakeBox {
+            0%, 100% {
+                transform: rotate(0deg);
+            }
+            10%, 30%, 50%, 70%, 90% {
+                transform: rotate(-5deg);
+            }
+            20%, 40%, 60%, 80% {
+                transform: rotate(5deg);
+            }
+        }
+        .gift-box::before {
+            background-color: none !important;
+        }
+        .gift-box-get::before {
+            background-color: none !important;
+            visibility: hidden;
+            content: '';
+        }
+        .gift-box-txt {
+            margin-top: 140px;
+        }
+        
+        .gift-box {
+            /* 背景图片将通过JavaScript动态设置 */
+            background-size: cover;
+            background-position: center;
+        }
+        .bg-bg-2 {
+            /* 背景图片将通过JavaScript动态设置 */
+            background-size: cover;
+            background-position: center;
+        }
+
+        .festive-red {
+            animation: festiveRed 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            display: inline-block;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="lottery-title" id="lotteryTitle"></div>
+    
+    <!-- 礼盒环形 -->
+    <div class="gift-ring-container v-h">
+        <div class="gift-ring" id="giftRing">
+            <!-- 礼盒将通过JavaScript动态生成，确保均匀分布 -->
+        </div>
+    </div>
+    
+    <!-- 抽奖按钮（移到页面底部） -->
+    <div class="lottery-btn-container">
+        <button id="lotteryBtn">点击抽奖</button>
+    </div>
+    
+    <!-- 谢谢惠顾Modal -->
+    <div class="thank-you-modal bg-bg-2" id="thankYouModal">
+        <div class="">
+            <div class="fx-c ani-card-pop">
+                <div class="gift-box gift-box-get">
+                    <!--<div class="glow"></div>
+                    <span class="gift-box-txt">惊喜礼盒</span>
+                    <div class="number">2</div>-->
+                </div>
+            </div>
+            <div class="ani-card-pop">
+                <div class="thank-you-text-2 yellow-text-with-shadow">恭喜中奖‘惊喜礼盒’</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 员工中奖Modal -->
+    <div class="modal-overlay bg-bg-2" id="lotteryModal">
+        <button class="modal-close-icon" id="modalCloseIcon">×</button>
+        <div class="modal-content ani-card-pop">
+            <div class="modal-header fx-c">
+                <div class="lottery-text bf-7 red-text-with-shadow festive-red">恭喜全员喜提800元红包</div>
+            </div>
+            <div id="modalCardContainer"></div>
+        </div>
+    </div>
+
+    <audio id="applauseAudio1" preload="auto">
+        <!-- 音频源将通过JavaScript动态设置 -->
+    </audio>
+    <audio id="applauseAudio2" preload="auto">
+        <!-- 音频源将通过JavaScript动态设置 -->
+    </audio>
+
+    <script>
+
+        // 员工数据
+        const employees = [
+            { name: '周孟毅' }, { name: '赵素蓁' }, { name: '龚媛' }, { name: '聂张帆' }, { name: '孙建双' },
+            { name: '刘子燕' }, { name: '康乃瑜' }, { name: '钟金娇' }, { name: '郑凯' }, { name: '王小霞' },
+            { name: '黄文翠' }, { name: '吴晟霞' }, { name: '周显语' }, { name: '潘国庆' }, { name: '曾亚琪' },
+            { name: '蔡婷' }, { name: '张敏' }, { name: '潘洁仪' }, { name: '李焕' }, { name: '黄淑君' },
+            { name: '彭振宇' }, { name: '闫顺' }, { name: '朱育正' }, { name: '陆燕' }, { name: '林福霖' },
+            { name: '朱蓉' }, { name: '曾媛' }, { name: '关海敏' }, { name: '韩音' }, { name: '唐蕾' },
+            { name: '祝小燕' }, { name: '叶莉' }, { name: '黄胜煌' }, { name: '邹瑾妮' }, { name: '李欢' },
+            { name: '包俊' }, { name: '林婷婷' }, { name: '陈宗萍' }, { name: '许巧雯' }, { name: '杨娟' },
+            { name: '龙礼发' }, { name: '陈洁虹' }, { name: '郭小梅' }, { name: '尹琳卿' }, { name: '倪婵璇' },
+            { name: '陈榆' }, { name: '尹厚成' }, { name: '邓甜甜' }, { name: '谢茜丽' }, { name: '周茵' },
+            { name: '曾美琪' }, { name: '杨存有' }, { name: '黄海伦' }, { name: '曾冬梅' }, { name: '田欢' },
+            { name: '邓碧玲' }, { name: '刘星星' }, { name: '张立勇' }, { name: '童佳' }, { name: '刘彬彬' },
+            { name: '吴泽茵' }, { name: '刘东' }, { name: '凃又荣' }, { name: '吴智珊' }, { name: '秦陪陪' },
+            { name: '陈子健' }, { name: '骆敏珊' }, { name: '陈娇如' }, { name: '李瑞莲' }, { name: '张福来' },
+            { name: '赵晓妹' }, { name: '黄宇超' }, { name: '李礼观' }, { name: '陈小群' }, { name: '苏志敏' },
+            { name: '屠西梅' }, { name: '林杰' }, { name: '张文兰' }, { name: '吴志波' }, { name: '魏健淳' },
+            { name: '莫冬玉' }, { name: '朱东琳' }, { name: '王彬' }, { name: '陈佳敏' }, { name: '周颖琦' },
+            { name: '任碧霞' }, { name: '吴梅芳' }, { name: '何甜' }, { name: '林绮欣' }, { name: '陈天翔' },
+            { name: '孙晓丹' }, { name: '范佳慧' }, { name: '陈俊东' }, { name: '廖浩生' }, { name: '郭黎' },
+            { name: '黄梦轩' }, { name: '白玉芝' }, { name: '罗淑娟' }, { name: '尹婷' }, { name: '刘钰' },
+            { name: '张芊' }, { name: '赖彦行' }, { name: '李倩' }, { name: '何霖玲' }, { name: '贾晓敏' },
+            { name: '杨秋霞' }, { name: '方金婷' }, { name: '莫韬熹' }, { name: '廖宇君' }, { name: '邹梦' },
+            { name: '林冰娜' }, { name: '梁海亮' }, { name: '张沅' }, { name: '刘小钢' }, { name: '蔡天锦' },
+            { name: '陈思冰' }, { name: '陆婷' }, { name: '从爱华' }, { name: '肖杨' }, { name: '崖青萍' },
+            { name: '蒋源' }, { name: '纪立娟' }, { name: '潘昊' }, { name: '王飞' }, { name: '汤佩云' },
+            { name: '李兴' }, { name: '刘凤翔' }, { name: '莫婷婷' }, { name: '刘康' }, { name: '吴翊维' },
+            { name: '李世豪' }, { name: '陈曼青' }, { name: '李锶榆' }, { name: '周埸涵' }, { name: '杨雨欣' },
+            { name: '陈晓娟' }, { name: '庞明军' }, { name: '邓亚平' }, { name: '刘声' }, { name: '温美君' },
+            { name: '黄带喜' }, { name: '邱璇' }, { name: '林育纯' }, { name: '黄安娜' }, { name: '吴仪涵' },
+            { name: '黄森榆' }, { name: '郭玲君' }, { name: '王霞' }, { name: '徐慧苹' }, { name: '王红艳' },
+            { name: '林宽郁' }, { name: '郭宇琳' }, { name: '李家豪' }, { name: '胥丹丹' }, { name: '张慧思' },
+            { name: '曾毅丹' }, { name: '叶晨垚' }, { name: '蒋怡潇' }, { name: '李贝' }, { name: '史姗姗' },
+            { name: '邵尚' }, { name: '吴诗琦' }, { name: '喜悦' }, { name: '张林静' }, { name: '曾娜' },
+            { name: '杨金婷' }, { name: '张玉亭' }, { name: '金昌模' }, { name: '郑洁雯' }, { name: '陈凡' },
+            { name: '赖绍端' }, { name: '温福剑' }, { name: '文万勇' }, { name: '郑伏次' }, { name: '郑泽乐' },
+            { name: '张小静' }, { name: '朱能凤' }, { name: '邱彦平' }, { name: '吕海凤' }, { name: '袁志群' },
+            { name: '高华' }, { name: '何建' }, { name: '熊闯' }, { name: '姚丹丹' }
+        ];
+
+        function getAudioSrc(name) {
+            const src = (CONFIG.resources.audio) || { }
+            return src[name] || ''; 
+        }
+        function getImageSrc(name) {
+            const src = (CONFIG.resources.images) || { }
+            return src[name] || ''; 
+        }
+        CONFIG.backgroundImageUrl = getImageSrc('background');
+        CONFIG.employeeData = employees;
+
+        // 初始化音频元素
+        function initAudioElements() {
+            const audio1 = document.getElementById('applauseAudio1');
+            const audio2 = document.getElementById('applauseAudio2');
+            
+            // 创建source元素并设置src
+            const source1 = document.createElement('source');
+            source1.src = getAudioSrc( 'surpriseBox' ); // CONFIG.resources.audio.surpriseBox;
+            source1.type = 'audio/mpeg';
+            
+            const source2 = document.createElement('source');
+            source2.src = getAudioSrc( 'applause' ); // CONFIG.resources.audio.applause;
+            source2.type = 'audio/mpeg';
+            
+            // 清空原有内容并添加新的source
+            audio1.innerHTML = '';
+            audio2.innerHTML = '';
+            audio1.appendChild(source1);
+            audio2.appendChild(source2);
+            
+            // 重新加载音频
+            audio1.load();
+            audio2.load();
+        }
+
+        // 初始化背景图片
+        function initBackgroundImages() {
+            // 设置body背景
+            document.body.style.backgroundImage = `url(${CONFIG.backgroundImageUrl})`;
+            
+            // 设置礼盒背景图片
+            const style = document.createElement('style');
+            style.textContent = `
+                .gift-box {
+                    background-image: url('${getImageSrc('giftBox')}') !important;
+                }
+                .bg-bg-2 {
+                    background-image: url('${getImageSrc('background2')}') !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        function playWinAudio(index = 1) {
+            const applauseAudio = document.getElementById('applauseAudio' + index);
+            applauseAudio.currentTime = 0; // 从头开始播放
+            applauseAudio.play().catch(e => console.log("音频播放失败:", e));
+        }
+
+        // 初始化
+        function initPage() {
+            // 初始化背景图片
+            initBackgroundImages();
+            
+            // 初始化音频
+            initAudioElements();
+            
+            // 设置页面标题
+            document.getElementById('lotteryTitle').innerText = CONFIG.pageTitleText;
+        }
+
+        function createGiftBox(index, name, x, y) {
+            // 创建礼盒元素
+            const giftBox = document.createElement('div');
+            giftBox.classList.add('gift-box');
+            giftBox.classList.add('gift-box-root');
+            giftBox.style.left = `${x}px`;
+            giftBox.style.top = `${y}px`;
+            
+            // 创建发光效果
+            const glow = document.createElement('div');
+            glow.classList.add('glow');
+            
+            // 礼盒名称
+            const span = document.createElement('span');
+            span.textContent = name; // CONFIG.giftNames[i];
+            
+            // 礼盒编号
+            const number = document.createElement('div');
+            number.classList.add('number');
+            number.textContent =  (index + 1).toString() // (i + 1).toString();
+            
+            // 组装礼盒
+            giftBox.appendChild(glow);
+            giftBox.appendChild(span);
+            giftBox.appendChild(number);
+
+            return giftBox;
+        }
+
+        // ===================== 创建均匀分布的礼盒环形 =====================
+        function createUniformGiftRing() {
+            const giftRing = document.getElementById('giftRing');
+            giftRing.innerHTML = '';
+            
+            const centerX = 250; // 容器中心X坐标
+            const centerY = 250; // 容器中心Y坐标
+            const radius = 180; // 环形半径
+            
+            // 8个礼盒，每个间隔45度
+            const numberOfGifts = 8;
+            const angleStep = (2 * Math.PI) / numberOfGifts;
+            
+            for (let i = 0; i < numberOfGifts; i++) {
+                // 计算每个礼盒的角度（从顶部开始，顺时针分布）
+                const angle = i * angleStep - Math.PI / 2; // 从顶部开始
+                
+                // 计算礼盒的坐标
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                
+                const giftBox = createGiftBox(i, CONFIG.giftNames[i], x, y)
+                
+                // 添加到环形中
+                giftRing.appendChild(giftBox);
+            }
+        }
+
+        // ===================== 礼盒旋转控制 =====================
+        const giftRing = document.getElementById('giftRing');
+        let isRotatingFast = false;
+        let lotteryCount = 0; // 抽奖次数计数器
+        
+        function startGiftRotation() {
+            if (isRotatingFast) return;
+            
+            isRotatingFast = true;
+            
+            // 停止慢速旋转，开始快速旋转
+            giftRing.style.animation = 'fast-rotate 3s cubic-bezier(0.1, 0.8, 0.2, 1) forwards';
+            
+            // 3秒后停止旋转，回到原点
+            setTimeout(() => {
+                giftRing.style.animation = 'none';
+                // 重置旋转角度
+                giftRing.style.transform = 'rotate(0deg)';
+                isRotatingFast = false;
+                
+                // 根据抽奖次数显示不同的Modal
+                lotteryCount++;
+                if (lotteryCount === 1) {
+                    
+                    playWinAudio(1);
+                    // 第一次抽奖：显示"谢谢惠顾"
+                    showThankYouModal();
+                } else if (lotteryCount === 2) {
+                    
+                    playWinAudio(2);
+                    // 第二次抽奖：显示所有员工中奖
+                    showAllEmployeesWinnerModal();
+                }
+            }, CONFIG.giftRotatingTime);
+        }
+        
+        // ===================== 显示谢谢惠顾Modal =====================
+        function showThankYouModal() {
+            const thankYouModal = document.getElementById('thankYouModal');
+            thankYouModal.style.display = 'flex';
+
+            // 内容是
+            
+            // 3秒后自动关闭
+            setTimeout(() => {
+                // closeThankYouModal();
+            }, 3000);
+        }
+        
+        function closeThankYouModal() {
+            const thankYouModal = document.getElementById('thankYouModal');
+            thankYouModal.style.display = 'none';
+            
+            // 重新启用抽奖按钮
+            lotteryBtn.disabled = false;
+            lotteryBtn.style.opacity = 1;
+            lotteryBtn.innerText = "点击抽奖（第2次）";
+        }
+        
+        // ===================== 显示所有员工中奖Modal =====================
+        function showAllEmployeesWinnerModal() {
+
+            // 清空之前的内容
+            modalCardContainer.innerHTML = '';
+            
+            // 创建所有员工的中奖卡片
+            CONFIG.employeeData.forEach((employee, index) => {
+                const redEnvelope = document.createElement('div');
+                redEnvelope.classList.add('cash-red-envelope');
+                redEnvelope.style.animationDelay = `${index * 0.01}s`;
+                redEnvelope.style.animation = 'cardPop 0.5s ease forwards';
+                
+                // 现金图标
+                const cashIcon = document.createElement('div');
+                cashIcon.classList.add('cash-icon');
+                cashIcon.innerHTML = '💰';
+                
+                // 员工姓名
+                const nameElement = document.createElement('div');
+                nameElement.classList.add('employee-name');
+                nameElement.innerText = employee.name;
+                
+                // 中奖内容
+                const prizeElement = document.createElement('div');
+                prizeElement.classList.add('prize-text');
+                prizeElement.innerText = '800元现金红包';
+                
+                redEnvelope.appendChild(cashIcon);
+                redEnvelope.appendChild(nameElement);
+                redEnvelope.appendChild(prizeElement);
+                
+                modalCardContainer.appendChild(redEnvelope);
+            });
+            
+            // 显示modal
+            lotteryModal.style.display = 'block';
+            
+            // 触发礼花效果
+            createConfetti();
+            
+            // 禁用抽奖按钮（因为已经完成两次抽奖）
+            lotteryBtn.disabled = true;
+            lotteryBtn.style.opacity = 0.7;
+            lotteryBtn.innerText = "抽奖结束";
+        }
+
+        // ===================== 修复后的礼花生成函数 =====================
+        function createConfetti() {
+            // 清除旧礼花
+            document.querySelectorAll('.confetti').forEach(c => c.remove());
+
+            // 生成礼花
+            for (let i = 0; i < CONFIG.confettiConfig.count; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+
+                // 随机属性
+                const randomColor = CONFIG.confettiConfig.colors[Math.floor(Math.random() * CONFIG.confettiConfig.colors.length)];
+                const randomSize = CONFIG.confettiConfig.sizes[Math.floor(Math.random() * CONFIG.confettiConfig.sizes.length)];
+                const randomX = Math.random() * 100; // 0-100vw 水平位置
+                const randomDelay = Math.random() * CONFIG.confettiConfig.delayMax; // 最大0.5秒延迟
+
+                // 核心样式：解决位置/可见性问题
+                confetti.style.backgroundColor = randomColor;
+                confetti.style.width = `${randomSize}px`;
+                confetti.style.height = `${randomSize}px`;
+                confetti.style.left = `${randomX}vw`; // 水平随机位置
+                confetti.style.animationDelay = `${randomDelay}s`; // 极短延迟，立即出现
+
+                // 添加到页面
+                document.body.appendChild(confetti);
+
+                // 动画结束后移除
+                setTimeout(() => confetti.remove(), (CONFIG.confettiConfig.fallDuration + 1) * 1000);
+            }
+        }
+
+        // 粒子效果逻辑
+        let mouseX = window.innerWidth / 2;
+        let mouseY = window.innerHeight / 2;
+        let particles = [];
+        let maxDistance;
+
+        function calcMaxDistance() {
+            const halfWidth = window.innerWidth * CONFIG.particleConfig.distanceRatio;
+            const halfHeight = window.innerHeight * CONFIG.particleConfig.distanceRatio;
+            maxDistance = Math.max(halfWidth, halfHeight);
+        }
+
+        function initParticles() {
+            calcMaxDistance();
+            const body = document.body;
+            for (let i = 0; i < CONFIG.particleConfig.particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                const randomColor = Math.random();
+                if (randomColor < CONFIG.particleConfig.colorRatio.skyblue) {
+                    particle.classList.add('particle-skyblue');
+                } else {
+                    particle.classList.add('particle-yellow');
+                }
+                const size = Math.random() * (CONFIG.particleConfig.particleSizeMax - CONFIG.particleConfig.particleSizeMin) + CONFIG.particleConfig.particleSizeMin;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${Math.random() * (window.innerWidth + maxDistance) - maxDistance/2}px`;
+                particle.style.top = `${Math.random() * (window.innerHeight + maxDistance) - maxDistance/2}px`;
+                particle.style.opacity = Math.random() * 0.4 + 0.4;
+                particles.push({
+                    element: particle,
+                    x: parseFloat(particle.style.left),
+                    y: parseFloat(particle.style.top),
+                    targetX: parseFloat(particle.style.left),
+                    targetY: parseFloat(particle.style.top),
+                });
+                body.appendChild(particle);
+            }
+        }
+
+        function listenMouseMove() {
+            document.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                particles.forEach(particle => {
+                    const offsetX = (Math.random() - 0.5) * maxDistance * CONFIG.particleConfig.randomness;
+                    const offsetY = (Math.random() - 0.5) * maxDistance * CONFIG.particleConfig.randomness;
+                    particle.targetX = mouseX + offsetX;
+                    particle.targetY = mouseY + offsetY;
+                });
+            });
+        }
+
+        function updateParticles() {
+            particles.forEach(particle => {
+                particle.x += (particle.targetX - particle.x) * CONFIG.particleConfig.easeSpeed;
+                particle.y += (particle.targetY - particle.y) * CONFIG.particleConfig.easeSpeed;
+                particle.x = Math.min(Math.max(particle.x, -maxDistance/2), window.innerWidth + maxDistance/2);
+                particle.y = Math.min(Math.max(particle.y, -maxDistance/2), window.innerHeight + maxDistance/2);
+                particle.element.style.left = `${particle.x}px`;
+                particle.element.style.top = `${particle.y}px`;
+            });
+            requestAnimationFrame(updateParticles);
+        }
+
+        function handleResize() {
+            window.addEventListener('resize', () => {
+                calcMaxDistance();
+                particles.forEach(particle => {
+                    particle.x = Math.min(Math.max(particle.x, -maxDistance/2), window.innerWidth + maxDistance/2);
+                    particle.y = Math.min(Math.max(particle.y, -maxDistance/2), window.innerHeight + maxDistance/2);
+                });
+            });
+        }
+
+        // Modal逻辑
+        const lotteryBtn = document.getElementById('lotteryBtn');
+        const lotteryModal = document.getElementById('lotteryModal');
+        const modalCloseIcon = document.getElementById('modalCloseIcon');
+        const modalCardContainer = document.getElementById('modalCardContainer');
+        const thankYouModal = document.getElementById('thankYouModal');
+
+        function startLottery() {
+            // 禁用按钮
+            lotteryBtn.disabled = true;
+            lotteryBtn.style.opacity = 0.7;
+            
+            // 开始礼盒旋转
+            startGiftRotation();
+        }
+
+        function closeModal() {
+            lotteryModal.style.display = 'none';
+        }
+        
+        // 点击谢谢惠顾Modal也可以关闭
+        thankYouModal.addEventListener('click', closeThankYouModal);
+
+        // 绑定事件
+        lotteryBtn.addEventListener('click', startLottery);
+        modalCloseIcon.addEventListener('click', closeModal);
+
+        // 启动
+        initPage(); // 初始化页面资源
+        initParticles();
+        listenMouseMove();
+        updateParticles();
+        handleResize();
+        
+        // 创建均匀分布的礼盒环形
+        createUniformGiftRing();
+    </script>
+</body>
+</html>
